@@ -1,32 +1,41 @@
-# Stage 1: Base
-FROM python:3.11-slim AS base
+# Stage 1: Build - This stage installs dependencies into a virtual environment
+FROM python:3.11-slim AS build
 
-# Ne fussunk root-ként
-RUN addgroup --system app && adduser --system --group app
-USER app
-WORKDIR /app
-
-# Python környezet beállításai
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Stage 2: Build
-FROM base AS build
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy with correct ownership and install
-# This ensures the user can write to the directory
-COPY --chown=app:app requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 3: Final
-FROM base AS final
+# Stage 2: Final - This stage creates the final, lean image
+FROM python:3.11-slim AS final
 
-# Másoljuk a függőségeket
-COPY --from=build /home/app/.local /home/app/.local
-ENV PATH=/home/app/.local/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Másoljuk a forráskódot
-COPY --chown=app:app . .
+# Create a non-root user
+RUN addgroup --system app && adduser --system --group app
+
+# Copy the virtual environment from the build stage
+COPY --from=build /opt/venv /opt/venv
+
+# Copy the application code
+WORKDIR /app
+COPY . .
+
+# Set ownership of the app directory to the new user
+RUN chown -R app:app /app
+
+# Activate the virtual environment by adding it to the PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Switch to the non-root user
+USER app
 
 # Futtatás
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "src.main"]
