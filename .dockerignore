@@ -1,0 +1,8 @@
+dev/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+terraform.tfstate*
+.terraform/
