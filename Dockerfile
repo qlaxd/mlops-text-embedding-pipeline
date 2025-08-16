@@ -13,7 +13,9 @@ ENV PYTHONUNBUFFERED 1
 # Stage 2: Build
 FROM base AS build
 
-COPY requirements.txt .
+# Copy with correct ownership and install
+# This ensures the user can write to the directory
+COPY --chown=app:app requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 3: Final
@@ -24,7 +26,7 @@ COPY --from=build /home/app/.local /home/app/.local
 ENV PATH=/home/app/.local/bin:$PATH
 
 # Másoljuk a forráskódot
-COPY . .
+COPY --chown=app:app . .
 
 # Futtatás
 CMD ["python", "src/main.py"]
