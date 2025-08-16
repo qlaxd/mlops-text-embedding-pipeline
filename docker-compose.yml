@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    volumes:
+      # Hogy a kimeneteket lássuk lokálisan
+      - ./output:/app/output 
+      # AWS credentials átadása
+      - ~/.aws:/home/app/.aws:ro
+    # .env fájl használata a bucket névhez
+    env_file:
+      - .env 
