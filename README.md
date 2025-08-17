@@ -43,7 +43,9 @@ These steps allow you to run and test the pipeline on your local machine.
 3.  **Set Up Environment Variables:**
     The application uses an `.env` file for local configuration. Create one from the example:
     ```bash
-    # Create a .env file and set your test bucket name
+    # Copy the example environment file
+    cp env.example .env
+    # Edit .env and set your test bucket name
     echo "S3_BUCKET_NAME=your-local-test-bucket-name" > .env
     ```
 
@@ -53,6 +55,30 @@ These steps allow you to run and test the pipeline on your local machine.
     docker-compose up --build
     ```
     *Note: We discovered a host-specific Docker networking issue during development. The `docker-compose.yml` is now configured to use `network_mode: bridge`, which is a stable workaround for such local environment problems.*
+
+## Building with Pipeline Version
+
+The application now supports automatic pipeline versioning based on Git commit hashes. This ensures traceability and makes debugging easier.
+
+### Option 1: Using the Build Script (Recommended)
+```bash
+# Make the build script executable (first time only)
+chmod +x build.sh
+
+# Build with automatic version detection
+./build.sh
+```
+
+### Option 2: Manual Docker Build
+```bash
+# Build with specific version
+docker build --build-arg PIPELINE_VERSION=$(git rev-parse HEAD) -t mlops-text-embedding-pipeline:latest .
+
+# Or build with custom version
+docker build --build-arg PIPELINE_VERSION=v1.0.0 -t mlops-text-embedding-pipeline:latest .
+```
+
+The pipeline version will be automatically embedded in the container and available in the metadata output.
 
 ---
 
@@ -102,7 +128,14 @@ Now that Terraform has created the ECR repository, we can build our application'
     Navigate back to the project root directory to run the build.
     ```bash
     cd ..
-    docker build -t $ECR_URL:latest .
+    
+    # Option A: Use the build script (recommended)
+    ./build.sh
+    docker tag mlops-text-embedding-pipeline:latest $ECR_URL:latest
+    docker push $ECR_URL:latest
+    
+    # Option B: Manual build with version
+    docker build --build-arg PIPELINE_VERSION=$(git rev-parse HEAD) -t $ECR_URL:latest .
     docker push $ECR_URL:latest
     ```
 
