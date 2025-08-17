@@ -158,7 +158,7 @@ resource "aws_scheduler_schedule" "daily_run" {
       launch_type         = "FARGATE"
       network_configuration {
         subnets         = data.aws_subnets.default.ids
-        assign_public_ip = "ENABLED"
+        assign_public_ip = true
       }
     }
   }
