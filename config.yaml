@@ -2,6 +2,7 @@ pipeline:
   model_path: "model.joblib"
   input_data_path: "data.txt"
   max_seq_length: 2048
+  aws_region: "us-east-1"
   # This value will be overridden by the environment variable S3_BUCKET_NAME during runtime in the container,
   # or by the value from the .env file when running locally via docker-compose.
   s3_bucket_name: "mlopsprojectbucket"
