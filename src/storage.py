@@ -8,10 +8,11 @@ from typing import Dict, Any
 import boto3
 from botocore.exceptions import ClientError
 
+
 class S3Storage:
     """A class to manage uploading data to an S3 bucket."""
 
-    def __init__(self, bucket_name: str, region_name: str = 'us-east-1'):
+    def __init__(self, bucket_name: str, region_name: str = "us-east-1"):
         """
         Initializes the S3Storage client.
 
@@ -20,17 +21,10 @@ class S3Storage:
             region_name: The AWS region of the bucket.
         """
         self.bucket_name = bucket_name
-        self.s3_client = boto3.client(
-            's3',
-            region_name=region_name
-        )
+        self.s3_client = boto3.client("s3", region_name=region_name)
 
     def upload_json(
-        self, 
-        data: Dict[str, Any], 
-        s3_key: str, 
-        retries: int = 3, 
-        delay: int = 5
+        self, data: Dict[str, Any], s3_key: str, retries: int = 3, delay: int = 5
     ) -> bool:
         """
         Uploads a dictionary as a JSON file to S3 with a retry mechanism.
@@ -56,23 +50,28 @@ class S3Storage:
                     Bucket=self.bucket_name,
                     Key=s3_key,
                     Body=json_string,
-                    ContentType='application/json'
+                    ContentType="application/json",
                 )
-                logging.info(f"Successfully uploaded to s3://{self.bucket_name}/{s3_key}")
+                logging.info(
+                    f"Successfully uploaded to s3://{self.bucket_name}/{s3_key}"
+                )
                 return True
             except ClientError as e:
                 # Retry only on potentially transient errors
-                if e.response['Error']['Code'] in ['InternalError', 'ServiceUnavailable']:
+                if e.response["Error"]["Code"] in [
+                    "InternalError",
+                    "ServiceUnavailable",
+                ]:
                     logging.warning(
                         f"S3 upload failed on attempt {attempt + 1}/{retries} with error: {e}. Retrying in {delay}s..."
                     )
                     time.sleep(delay)
                 else:
                     logging.error(f"An unrecoverable S3 ClientError occurred: {e}")
-                    return False # Do not retry on non-transient errors
+                    return False  # Do not retry on non-transient errors
             except Exception as e:
                 logging.error(f"An unexpected error occurred during S3 upload: {e}")
                 return False
-        
+
         logging.error(f"S3 upload failed after {retries} attempts.")
         return False
