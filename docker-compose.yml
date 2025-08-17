@@ -1,8 +1,10 @@
-version: '3.8'
 services:
   app:
     build: .
-    network_mode: "host"
+    network_mode: bridge
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     volumes:
       # Hogy a kimeneteket lássuk lokálisan
       - ./output:/app/output 
