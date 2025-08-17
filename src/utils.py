@@ -2,7 +2,6 @@
 
 import re
 
-
 def is_valid_input(text: str) -> bool:
     """
     Validates if the input text is a valid string for processing.

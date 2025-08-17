@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 
 class S3Storage:
     """A class to manage uploading data to an S3 bucket."""
-
+    
     def __init__(self, bucket_name: str, region_name: str = "us-east-1"):
         """
         Initializes the S3Storage client.
