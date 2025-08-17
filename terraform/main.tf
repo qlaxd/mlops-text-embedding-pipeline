@@ -36,14 +36,61 @@ resource "aws_iam_role" "ecs_task_execution_role" {
         Action    = "sts:AssumeRole"
         Effect    = "Allow"
         Principal = {
-          Service = [
-            "ecs-tasks.amazonaws.com",
-            "scheduler.amazonaws.com"
-            ]
+          Service = "ecs-tasks.amazonaws.com"
         }
       }
     ]
   })
+}
+
+# IAM role for EventBridge Scheduler (separate from task execution)
+resource "aws_iam_role" "scheduler_role" {
+  name = "${var.project_name}-scheduler-role"
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM policy for scheduler to run ECS tasks
+resource "aws_iam_policy" "scheduler_ecs_policy" {
+  name        = "${var.project_name}-scheduler-ecs-policy"
+  description = "Allows EventBridge Scheduler to run ECS tasks"
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Action   = [
+          "ecs:RunTask"
+        ]
+        Effect   = "Allow"
+        Resource = aws_ecs_task_definition.main.arn
+      },
+      {
+        Action   = [
+          "iam:PassRole"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          aws_iam_role.ecs_task_execution_role.arn,
+          aws_iam_role.ecs_task_role.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "scheduler_ecs_policy" {
+  role       = aws_iam_role.scheduler_role.name
+  policy_arn = aws_iam_policy.scheduler_ecs_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
@@ -154,7 +201,7 @@ resource "aws_scheduler_schedule" "daily_run" {
 
   target {
     arn      = aws_ecs_cluster.main.arn
-    role_arn = aws_iam_role.ecs_task_execution_role.arn # A role with permissions to run tasks
+    role_arn = aws_iam_role.scheduler_role.arn # Use dedicated scheduler role
 
     ecs_parameters {
       task_definition_arn = aws_ecs_task_definition.main.arn
