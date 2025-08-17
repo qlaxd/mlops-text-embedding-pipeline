@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        PIPELINE_VERSION: ${PIPELINE_VERSION:-unknown}
     network_mode: bridge
     dns:
       - 8.8.8.8

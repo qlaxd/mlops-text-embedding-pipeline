@@ -1,8 +1,9 @@
 # Stage 1: Build - This stage installs dependencies into a virtual environment
 FROM python:3.11-slim AS build
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Python environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Create and activate virtual environment
 RUN python -m venv /opt/venv
@@ -15,8 +16,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Stage 2: Final - This stage creates the final, lean image
 FROM python:3.11-slim AS final
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Python environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set pipeline version from build argument
+ARG PIPELINE_VERSION=unknown
+ENV PIPELINE_VERSION=$PIPELINE_VERSION
 
 # Create a non-root user
 RUN addgroup --system app && adduser --system --group app
