@@ -2,37 +2,22 @@
     
 import datetime
 import logging
-import subprocess
+import os
 from typing import Dict, Any, Optional
 
 logging.basicConfig(level=logging.INFO)
 
-def _get_git_commit_hash() -> Optional[str]:
+def _get_pipeline_version() -> str:
     """
-    Retrieves the current Git commit hash.
+    Retrieves the pipeline version from environment variable.
+    
+    This approach is more robust than git commands in Docker containers.
+    The version should be set during Docker build via --build-arg.
 
     Returns:
-        The Git commit hash as a string, or None if it cannot be retrieved.
+        The pipeline version as a string, or "unknown" if not set.
     """
-
-    try:
-        # The --git-dir and --work-tree arguments are added to ensure this command
-        # works even if the script is not run from the repository root.
-        # This is not strictly necessary for Docker but is good practice.
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd="./",  # Ensure it runs in the correct directory context
-        )
-        return result.stdout.strip()
-
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        logging.warning(
-            "Could not determine Git commit hash. Not a git repository or git is not installed."
-        )
-        return None
+    return os.getenv("PIPELINE_VERSION", "unknown")
 
 
 def generate_metadata(
@@ -54,14 +39,14 @@ def generate_metadata(
         A dictionary containing the run's metadata.
     """
 
-    pipeline_version = _get_git_commit_hash()
+    pipeline_version = _get_pipeline_version()
     metadata = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "input_file": input_file,
         "num_inputs": num_inputs,
         "num_chunks": num_chunks,
         "model_version": model_version,
-        "pipeline_version": pipeline_version or "unknown",
+        "pipeline_version": pipeline_version,
     }
 
     logging.info(f"Generated metadata: {metadata}")

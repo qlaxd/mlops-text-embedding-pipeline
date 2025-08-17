@@ -23,12 +23,13 @@ def run():
         # 1. Initialization
         app_config = config.load_config()
         s3_bucket = app_config["s3_bucket_name"]
+        aws_region = app_config.get("aws_region")
         input_file_path = app_config["input_data_path"]
         embedding_service = embedder.Embedder(
             model_path=app_config["model_path"],
             max_seq_length=app_config["max_seq_length"],
         )
-        storage_service = storage.S3Storage(bucket_name=s3_bucket)
+        storage_service = storage.S3Storage(bucket_name=s3_bucket, region_name=aws_region)
         all_chunks = []
         processed_lines = 0
 
